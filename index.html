@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Precision Watches - Store & Management</title>
+  <style>
+    :root {
+      --primary: #0f172a;
+      --accent: #2563eb;
+      --accent-hover: #1d4ed8;
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --border: #e2e8f0;
+      --text: #0f172a;
+      --muted: #64748b;
+      --success: #16a34a;
+      --warning: #d97706;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { background-color: var(--bg); color: var(--text); padding-bottom: 80px; }
+
+    header {
+      background: var(--primary);
+      color: #fff;
+      padding: 16px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    header h1 { font-size: 1.25rem; font-weight: 600; letter-spacing: 0.5px; }
+    .auth-status { font-size: 0.9rem; display: flex; gap: 12px; align-items: center; }
+
+    .container {
+      max-width: 1200px;
+      margin: 24px auto;
+      padding: 0 16px;
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 24px;
+    }
+    @media (min-width: 900px) {
+      .container { grid-template-columns: 2fr 1fr; }
+    }
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    .card h2 {
+      font-size: 1.15rem;
+      margin-bottom: 16px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .form-group { margin-bottom: 12px; }
+    label { display: block; font-size: 0.85rem; color: var(--muted); margin-bottom: 4px; }
+    input, textarea, select {
+      width: 100%;
+      padding: 9px 12px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 0.95rem;
+      background: #fff;
+    }
+    input:focus, textarea:focus, select:focus { outline: 2px solid var(--accent); }
+
+    button {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      padding: 10px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 500;
+      transition: background 0.15s ease;
+    }
+    button:hover { background: var(--accent-hover); }
+    button.secondary { background: var(--muted); }
+    button.secondary:hover { background: #475569; }
+    button.sm-btn { padding: 4px 8px; font-size: 0.8rem; }
+
+    /* Categories Strip */
+    .category-pills {
+      display: flex;
+      gap: 12px;
+      overflow-x: auto;
+      padding-bottom: 8px;
+      margin-bottom: 16px;
+    }
+    .category-pill {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: #fff;
+      border: 1px solid var(--border);
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      white-space: nowrap;
+    }
+    .category-pill img {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+
+    /* Product Grid */
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; }
+    .product-card {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      background: #fff;
+    }
+    .product-card img {
+      width: 100%;
+      height: 180px;
+      object-fit: cover;
+      background-color: #f1f5f9;
+    }
+    .product-details { padding: 12px; display: flex; flex-direction: column; flex-grow: 1; }
+    .product-details h3 { font-size: 1rem; margin-bottom: 4px; }
+    .brand { font-size: 0.8rem; color: var(--muted); text-transform: uppercase; margin-bottom: 8px; }
+    .price { font-size: 1.1rem; font-weight: 700; color: var(--primary); margin-top: auto; margin-bottom: 8px; }
+
+    /* Cart and Orders */
+    .item-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); }
+    .status-badge {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 12px;
+      font-size: 0.75rem;
+      text-transform: capitalize;
+      font-weight: 600;
+      background: #e2e8f0;
+      color: #334155;
+    }
+    .status-pending { background: #fef3c7; color: var(--warning); }
+    .status-shipped { background: #dbeafe; color: #1e40af; }
+    .status-delivered { background: #dcfce7; color: var(--success); }
+
+    .notification {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: var(--primary);
+      color: #fff;
+      padding: 12px 20px;
+      border-radius: 6px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.15);
+      display: none;
+      z-index: 200;
+    }
+
+    .admin-indicator {
+      display: inline-block;
+      background: #ef4444;
+      color: #fff;
+      font-size: 0.7rem;
+      padding: 2px 6px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>Precision Watches</h1>
+    <div class="auth-status">
+      <span id="user-display">Not logged in</span>
+      <button id="auth-action-btn" onclick="toggleAuthModal()">Login / Register</button>
+      <button id="logout-btn" class="secondary" style="display: none;" onclick="logout()">Logout</button>
+    </div>
+  </header>
+
+  <div class="container">
+    <!-- Left Column: Catalog & Order History -->
+    <main style="display: flex; flex-direction: column; gap: 24px;">
+      
+      <!-- Store Categories -->
+      <section class="card">
+        <h2>Watch Collections & Categories</h2>
+        <div class="category-pills" id="category-pills-list">
+          <p style="color: var(--muted); font-size: 0.85rem;">No collections registered yet.</p>
+        </div>
+      </section>
+
+      <!-- Watches Catalog -->
+      <section class="card">
+        <h2>Available Watches</h2>
+        <div class="grid" id="products-list">
+          <p style="color: var(--muted);">Loading watches...</p>
+        </div>
+      </section>
+
+      <!-- Customer Order History -->
+      <section class="card">
+        <h2>Order History</h2>
+        <div id="orders-list">
+          <p style="color: var(--muted);">Log in to view past orders.</p>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- Right Column: Cart & Admin Controls -->
+    <aside style="display: flex; flex-direction: column; gap: 24px;">
+      
+      <!-- Cart Section -->
+      <div class="card">
+        <h2>Your Shopping Cart</h2>
+        <div id="cart-items">
+          <p style="color: var(--muted);">Cart is empty.</p>
+        </div>
+        <div style="margin-top: 16px; border-top: 1px solid var(--border); padding-top: 12px;">
+          <p style="display: flex; justify-content: space-between; font-weight: 600; margin-bottom: 12px;">
+            <span>Total:</span>
+            <span id="cart-total">\$0.00</span>
+          </p>
+          <div class="form-group">
+            <label for="shipping-address">Delivery Destination:</label>
+            <input type="text" id="shipping-address" placeholder="e.g. 104, Sunrise Apts, Jamnagar" />
+          </div>
+          <button style="width: 100%;" onclick="checkout()">Proceed to Checkout</button>
+        </div>
+      </div>
+
+      <!-- Admin Panel 1: Add Category -->
+      <div class="card" id="admin-category-panel" style="display: none;">
+        <h2><span class="admin-indicator">Admin</span> Add Category</h2>
+        <form id="add-category-form" onsubmit="uploadCategory(event)">
+          <div class="form-group">
+            <label>Collection Name:</label>
+            <input type="text" id="cat-name" placeholder="e.g. Chronograph, Diving, Smartwatch" required />
+          </div>
+          <div class="form-group">
+            <label>Description:</label>
+            <textarea id="cat-desc" rows="2" placeholder="Brief collection details..."></textarea>
+          </div>
+          <div class="form-group">
+            <label>Category Image:</label>
+            <input type="file" id="cat-image" accept="image/*" />
+          </div>
+          <button type="submit" style="width: 100%;">Create Category</button>
+        </form>
+      </div>
+
+      <!-- Admin Panel 2: Add Watch Product -->
+      <div class="card" id="admin-product-panel" style="display: none;">
+        <h2><span class="admin-indicator">Admin</span> Add Watch</h2>
+        <form id="add-product-form" onsubmit="uploadProduct(event)">
+          <div class="form-group">
+            <label>Category:</label>
+            <select id="prod-category" required>
+              <option value="">Select a category</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Watch Model Name:</label>
+            <input type="text" id="prod-name" placeholder="e.g. Prospex Automatic" required />
+          </div>
+          <div class="form-group">
+            <label>Brand:</label>
+            <input type="text" id="prod-brand" placeholder="e.g. Seiko, Casio, Citizen" required />
+          </div>
+          <div class="form-group">
+            <label>Price (\$):</label>
+            <input type="number" id="prod-price" step="0.01" placeholder="250.00" required />
+          </div>
+          <div class="form-group">
+            <label>Stock Quantity:</label>
+            <input type="number" id="prod-stock" placeholder="15" required />
+          </div>
+          <div class="form-group">
+            <label>Description:</label>
+            <textarea id="prod-desc" rows="2" placeholder="Specifications, glass type, movement..."></textarea>
+          </div>
+          <div class="form-group">
+            <label>Watch Image:</label>
+            <input type="file" id="prod-image" accept="image/*" required />
+          </div>
+          <button type="submit" style="width: 100%;">Upload Watch</button>
+        </form>
+      </div>
+
+    </aside>
+  </div>
+
+  <!-- Notification Toast -->
+  <div id="notification" class="notification"></div>
+
+  <script>
+    const API_BASE = "http://localhost:5000/api";
+    const SERVER_URL = "http://localhost:5000";
+
+    let token = localStorage.getItem("watch_token") || null;
+    let currentUser = JSON.parse(localStorage.getItem("watch_user") || "null");
+
+    function notify(message) {
+      const box = document.getElementById("notification");
+      box.innerText = message;
+      box.style.display = "block";
+      setTimeout(() => { box.style.display = "none"; }, 3500);
+    }
+
+    function syncAuthState() {
+      const userDisplay = document.getElementById("user-display");
+      const authBtn = document.getElementById("auth-action-btn");
+      const logoutBtn = document.getElementById("logout-btn");
+      const catPanel = document.getElementById("admin-category-panel");
+      const prodPanel = document.getElementById("admin-product-panel");
+
+      if (token && currentUser) {
+        userDisplay.innerText = `${currentUser.name} (${currentUser.role})`;
+        authBtn.style.display = "none";
+        logoutBtn.style.display = "inline-block";
+
+        if (currentUser.role === "admin") {
+          catPanel.style.display = "block";
+          prodPanel.style.display = "block";
+        } else {
+          catPanel.style.display = "none";
+          prodPanel.style.display = "none";
+        }
+        loadCart();
+        loadOrders();
+      } else {
+        userDisplay.innerText = "Not logged in";
+        authBtn.style.display = "inline-block";
+        logoutBtn.style.display = "none";
+        catPanel.style.display = "none";
+        prodPanel.style.display = "none";
+        document.getElementById("cart-items").innerHTML = "<p style='color: var(--muted);'>Log in to manage cart.</p>";
+        document.getElementById("orders-list").innerHTML = "<p style='color: var(--muted);'>Log in to view past orders.</p>";
+      }
+    }
+
+    async function toggleAuthModal() {
+      const action = prompt("Type 'login' to sign in or 'register' to create an account:", "login");
+      if (!action) return;
+
+      const email = prompt("Enter your email:");
+      const password = prompt("Enter your password:");
+      if (!email || !password) return;
+
+      if (action.toLowerCase() === "register") {
+        const name = prompt("Enter your full name:");
+        const role = prompt("Enter role ('customer' or 'admin'):", "customer");
+        try {
+          const res = await fetch(`${API_BASE}/auth/register`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name, email, password, role })
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error);
+          notify("Registration complete! Now log in.");
+        } catch (err) {
+          alert("Registration Error: " + err.message);
+        }
+      } else {
+        try {
+          const res = await fetch(`${API_BASE}/auth/login`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email, password })
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error);
+
+          token = data.token;
+          currentUser = data.user;
+          localStorage.setItem("watch_token", token);
+          localStorage.setItem("watch_user", JSON.stringify(currentUser));
+          syncAuthState();
+          notify("Welcome back, " + currentUser.name);
+        } catch (err) {
+          alert("Login Failed: " + err.message);
+        }
+      }
+    }
+
+    function logout() {
+      token = null;
+      currentUser = null;
+      localStorage.removeItem("watch_token");
+      localStorage.removeItem("watch_user");
+      syncAuthState();
+      notify("Logged out successfully.");
+    }
+
+    // --- 1. Categories Logic ---
+    async function loadCategories() {
+      try {
+        const res = await fetch(`${API_BASE}/categories`);
+        const categories = await res.json();
+        
+        // Populate top pills
+        const pillContainer = document.getElementById("category-pills-list");
+        if (categories.length === 0) {
+          pillContainer.innerHTML = "<p style='color: var(--muted); font-size: 0.85rem;'>No collections available.</p>";
+        } else {
+          pillContainer.innerHTML = categories.map(c => `
+            <div class="category-pill">
+              ${c.image_url ? `<img src="${SERVER_URL + c.image_url}" alt="${c.name}" />` : ''}
+              <strong>${c.name}</strong>
+            </div>
+          `).join("");
+        }
+
+        // Populate product form dropdown
+        const select = document.getElementById("prod-category");
+        if (select) {
+          select.innerHTML = '<option value="">Select a category</option>' + 
+            categories.map(c => `<option value="${c.id}">${c.name}</option>`).join("");
+        }
+      } catch (err) {
+        console.error("Categories error:", err);
+      }
+    }
+
+    async function uploadCategory(event) {
+      event.preventDefault();
+      if (!token || currentUser?.role !== "admin") return alert("Admin privileges required.");
+
+      const formData = new FormData();
+      formData.append("name", document.getElementById("cat-name").value.trim());
+      formData.append("description", document.getElementById("cat-desc").value.trim());
+
+      const file = document.getElementById("cat-image").files[0];
+      if (file) formData.append("image", file);
+
+      try {
+        const res = await fetch(`${API_BASE}/categories`, {
+          method: "POST",
+          headers: { "Authorization": `Bearer ${token}` },
+          body: formData
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error);
+
+        notify(`Collection '${data.name}' added!`);
+        document.getElementById("add-category-form").reset();
+        loadCategories();
+      } catch (err) {
+        alert("Upload failed: " + err.message);
+      }
+    }
+
+    // --- 2. Products Logic ---
+    async function loadProducts() {
+      try {
+        const res = await fetch(`${API_BASE}/products`);
+        const products = await res.json();
+        const container = document.getElementById("products-list");
+
+        if (products.length === 0) {
+          container.innerHTML = "<p style='color: var(--muted);'>No watches available right now.</p>";
+          return;
+        }
+
+        container.innerHTML = products.map(p => `
+          <div class="product-card">
+            <img src="${p.image_url ? (SERVER_URL + p.image_url) : 'https://placehold.co/300x200?text=No+Photo'}" alt="${p.name}" />
+            <div class="product-details">
+              <span class="brand">${p.brand || 'Precision'} • ${p.category_name || 'Watch'}</span>
+              <h3>${p.name}</h3>
+              <p style="font-size: 0.85rem; color: var(--muted); margin-bottom: 8px;">Units in stock: ${p.stock}</p>
+              <div class="price">$${parseFloat(p.price).toFixed(2)}</div>
+              <button onclick="addToCart(${p.id})" ${p.stock <= 0 ? 'disabled style="background:var(--muted);"' : ''}>
+                ${p.stock > 0 ? 'Add to Cart' : 'Out of Stock'}
+              </button>
+            </div>
+          </div>
+        `).join("");
+      } catch (err) {
+        console.error("Products error:", err);
+      }
+    }
+
+    async function uploadProduct(event) {
+      event.preventDefault();
+      if (!token || currentUser?.role !== "admin") return alert("Admin privileges required.");
+
+      const formData = new FormData();
+      formData.append("category_id", document.getElementById("prod-category").value);
+      formData.append("name", document.getElementById("prod-name").value.trim());
+      formData.append("brand", document.getElementById("prod-brand").value.trim());
+      formData.append("price", document.getElementById("prod-price").value);
+      formData.append("stock", document.getElementById("prod-stock").value);
+      formData.append("description", document.getElementById("prod-desc").value.trim());
+      formData.append("image", document.getElementById("prod-image").files[0]);
+
+      try {
+        const res = await fetch(`${API_BASE}/products`, {
+          method: "POST",
+          headers: { "Authorization": `Bearer ${token}` },
+          body: formData
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error);
+
+        notify("Watch listed successfully!");
+        document.getElementById("add-product-form").reset();
+        loadProducts();
+      } catch (err) {
+        alert("Product upload failed: " + err.message);
+      }
+    }
+
+    // --- 3. Cart Logic ---
+    async function addToCart(productId) {
+      if (!token) return alert("Please log in to add watches to your cart.");
+      try {
+        const res = await fetch(`${API_BASE}/cart`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          },
+          body: JSON.stringify({ product_id: productId, quantity: 1 })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error);
+        notify("Watch added to your cart!");
+        loadCart();
+      } catch (err) {
+        alert(err.message);
+      }
+    }
+
+    async function loadCart() {
+      if (!token) return;
+      try {
+        const res = await fetch(`${API_BASE}/cart`, {
+          headers: { "Authorization": `Bearer ${token}` }
+        });
+        const items = await res.json();
+        const container = document.getElementById("cart-items");
+
+        if (items.length === 0) {
+          container.innerHTML = "<p style='color: var(--muted);'>Your cart is empty.</p>";
+          document.getElementById("cart-total").innerText = "\$0.00";
+          return;
+        }
+
+        let total = 0;
+        container.innerHTML = items.map(item => {
+          total += item.price * item.quantity;
+          return `
+            <div class="item-row">
+              <div>
+                <strong>${item.name}</strong><br/>
+                <small>$${parseFloat(item.price).toFixed(2)} × ${item.quantity}</small>
+              </div>
+              <span>$${(item.price * item.quantity).toFixed(2)}</span>
+            </div>
+          `;
+        }).join("");
+
+        document.getElementById("cart-total").innerText = `$${total.toFixed(2)}`;
+      } catch (err) {
+        console.error("Cart error:", err);
+      }
+    }
+
+    // --- 4. Checkout Logic ---
+    async function checkout() {
+      if (!token) return alert("Please log in to complete purchase.");
+      const address = document.getElementById("shipping-address").value.trim();
+      if (!address) return alert("Please provide a shipping address.");
+
+      try {
+        const res = await fetch(`${API_BASE}/checkout`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          },
+          body: JSON.stringify({ shipping_address: address })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error);
+
+        notify(`Success! Order #${data.orderId} placed.`);
+        document.getElementById("shipping-address").value = "";
+        loadCart();
+        loadOrders();
+        loadProducts(); // Refresh live stock counts
+      } catch (err) {
+        alert("Checkout Error: " + err.message);
+      }
+    }
+
+    // --- 5. Order History & Status Updates ---
+    async function loadOrders() {
+      if (!token) return;
+      try {
+        const res = await fetch(`${API_BASE}/orders/history`, {
+          headers: { "Authorization": `Bearer ${token}` }
+        });
+        const orders = await res.json();
+        const container = document.getElementById("orders-list");
+
+        if (orders.length === 0) {
+          container.innerHTML = "<p style='color: var(--muted);'>You have no order history yet.</p>";
+          return;
+        }
+
+        container.innerHTML = orders.map(o => `
+          <div style="border-bottom: 1px solid var(--border); padding: 12px 0;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <strong>Order #${o.id}</strong>
+              <span class="status-badge status-${o.status}">${o.status}</span>
+            </div>
+            <p style="font-size: 0.85rem; color: var(--muted);">Date: ${new Date(o.created_at).toLocaleDateString()}</p>
+            <p style="font-size: 0.85rem; margin-bottom: 6px;"><strong>Ship To:</strong> ${o.shipping_address}</p>
+            <div style="font-size: 0.85rem; background:#f8fafc; padding:8px; border-radius:4px; margin: 6px 0;">
+              ${o.items ? o.items.map(i => `• \${i.name} (Qty: ${i.quantity}) -$\${parseFloat(i.price).toFixed(2)}`).join("<br/>") : ''}
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 6px;">
+              ${currentUser?.role === 'admin' ? `
+                <div>
+                  <select id="status-select-\${o.id}" style="width: auto; padding: 2px 6px; font-size: 0.8rem;">
+                    <option value="pending" \${o.status==='pending'?'selected':''}>Pending</option>
+                    <option value="confirmed" \${o.status==='confirmed'?'selected':''}>Confirmed</option>
+                    <option value="shipped" \${o.status==='shipped'?'selected':''}>Shipped</option>
+                    <option value="out_for_delivery" \${o.status==='out_for_delivery'?'selected':''}>Out for Delivery</option>
+                    <option value="delivered" \${o.status==='delivered'?'selected':''}>Delivered</option>
+                    <option value="cancelled" \${o.status==='cancelled'?'selected':''}>Cancelled</option>
+                  </select>
+                  <button class="sm-btn" onclick="updateOrderStatus(\${o.id})">Update</button>
+                </div>
+              ` : '<span></span>'}
+              <strong style="font-size: 0.95rem;">Total: $${parseFloat(o.total_amount).toFixed(2)}</strong>
+            </div>
+          </div>
+        `).join("");
+      } catch (err) {
+        console.error("Order history error:", err);
+      }
+    }
+
+    async function updateOrderStatus(orderId) {
+      const select = document.getElementById(`status-select-${orderId}`);
+      const newStatus = select.value;
+
+      try {
+        const res = await fetch(`${API_BASE}/orders/${orderId}/status`, {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          },
+          body: JSON.stringify({ status: newStatus })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error);
+
+        notify(data.message);
+        loadOrders();
+      } catch (err) {
+        alert("Status update failed: " + err.message);
+      }
+    }
+
+    // Initialize application state
+    syncAuthState();
+    loadCategories();
+    loadProducts();
+  </script>
+</body>
+</html>
